@@ -792,7 +792,7 @@ class Bynder {
       const finalizeUrl = `v4/media/${mediaId}/save/additional/${uploadid}`;
       return this.api.send("POST", finalizeUrl, payload);
     } else {
-      return this.api.send("POST", `v4/upload/${uploadid}/`, {...payload, original_filename: filename});
+      return this.api.send("POST", `v4/upload/${uploadid}/${process.env.BYNDER_FINALISE_UPLOAD_URL_PARAMS || ''}`, {...payload, original_filename: filename});
     }
   }
 
@@ -881,7 +881,7 @@ class Bynder {
     const { body } = file;
     const bodyType = bodyTypes.get(body);
     const length = getLength(file);
-    const CHUNK_SIZE = 1024 * 1024 * 5;
+    const CHUNK_SIZE = parseInt(process.env.BYNDER_UPLOAD_CHUNK_SIZE || 1024 * 1024 * 5, 10);
     const chunks = Math.ceil(length / CHUNK_SIZE);
 
     const registerChunk = this.registerChunk.bind(this);
@@ -907,7 +907,8 @@ class Bynder {
         opts = {
           headers: Object.assign(form.getHeaders(), {
             "content-length": form.getLengthSync()
-          })
+          }),
+          maxBodyLength: CHUNK_SIZE * 1.2,
         };
       }
       return axios.post(endpoint, form, opts);
